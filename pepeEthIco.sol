@@ -418,7 +418,7 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
     // Determines if fixed pricing is used instead of dynamic stage pricing
     bool public useFixedPrice;
 
-    // Fixed price in USD with 8 decimals (e.g., 3000 = $0.003)
+    // Fixed price in USD with 6 decimals (e.g., 3000 = $0.003)
     uint256 public fixedPriceUSD;
 
     // Sum of all influencer commissions
@@ -945,4 +945,3 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
 
     receive() external payable {}
 }
-
