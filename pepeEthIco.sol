@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.20;
 
 abstract contract ReentrancyGuard {
     uint256 private constant _NOT_ENTERED = 1;
@@ -29,35 +29,19 @@ abstract contract ReentrancyGuard {
         // https://eips.ethereum.org/EIPS/eip-2200)
         _status = _NOT_ENTERED;
     }
-
-    /**
-     * @dev Returns true if the reentrancy guard is currently set to "entered", which indicates there is a
-     * `nonReentrant` function in the call stack.
-     */
-    function _reentrancyGuardEntered() internal view returns (bool) {
-        return _status == _ENTERED;
-    }
 }
 
 // File: ethPepeIco.sol
 
-pragma solidity ^0.8.20;
+pragma solidity 0.8.20;
 
 abstract contract Context {
     function _msgSender() internal view virtual returns (address) {
         return msg.sender;
     }
-
-    function _msgData() internal view virtual returns (bytes calldata) {
-        return msg.data;
-    }
-
-    function _contextSuffixLength() internal view virtual returns (uint256) {
-        return 0;
-    }
 }
 
-pragma solidity ^0.8.20;
+pragma solidity 0.8.20;
 
 abstract contract Ownable is Context {
     address private _owner;
@@ -180,20 +164,6 @@ library Address {
         return verifyCallResultFromTarget(target, success, returndata);
     }
 
-    /**
-     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
-     * but performing a static call.
-     */
-    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {
-        (bool success, bytes memory returndata) = target.staticcall(data);
-        return verifyCallResultFromTarget(target, success, returndata);
-    }
-
-    function functionDelegateCall(address target, bytes memory data) internal returns (bytes memory) {
-        (bool success, bytes memory returndata) = target.delegatecall(data);
-        return verifyCallResultFromTarget(target, success, returndata);
-    }
-
     function verifyCallResultFromTarget(
         address target,
         bool success,
@@ -236,7 +206,7 @@ library Address {
         }
     }
 }
-pragma solidity ^0.8.20;
+pragma solidity 0.8.20;
 
 interface IERC20 {
     /**
@@ -332,23 +302,6 @@ library SafeERC20 {
         _callOptionalReturn(token, abi.encodeCall(token.transferFrom, (from, to, value)));
     }
 
-  
-    function safeIncreaseAllowance(IERC20 token, address spender, uint256 value) internal {
-        uint256 oldAllowance = token.allowance(address(this), spender);
-        forceApprove(token, spender, oldAllowance + value);
-    }
-
-  
-    function safeDecreaseAllowance(IERC20 token, address spender, uint256 requestedDecrease) internal {
-        unchecked {
-            uint256 currentAllowance = token.allowance(address(this), spender);
-            if (currentAllowance < requestedDecrease) {
-                revert SafeERC20FailedDecreaseAllowance(spender, currentAllowance, requestedDecrease);
-            }
-            forceApprove(token, spender, currentAllowance - requestedDecrease);
-        }
-    }
-
     function forceApprove(IERC20 token, address spender, uint256 value) internal {
         bytes memory approvalCall = abi.encodeCall(token.approve, (spender, value));
 
@@ -371,7 +324,7 @@ library SafeERC20 {
     }
 }
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.20;
 
 interface AggregatorV3Interface {
   function decimals() external view returns (uint8);
@@ -445,6 +398,7 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
     uint256 private constant USD_5000 = 5000 * 10 ** 6;
     uint256 private constant USD_10000 = 10000 * 10 **6;
     uint256 constant MULTIPLIER = 1e20;
+    uint256 public maxCommissionPercent;
 
     // Total amount of ETH raised from all purchases (denominated in wei)
     uint256 public ethRaised;
@@ -545,6 +499,7 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
         adminWallet = _adminWallet;
         startTime = _startTime;
         totalTokenCap = 175_000_000 * 10**18;   // 70% of 250M for ETH-ICO
+        maxCommissionPercent = 50; // only real number we gonna support.
     }
 
     /// @dev Sets commission percentages for a list of influencer addresses.
@@ -552,9 +507,12 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
     /// @param _commissions Array of commission percentages corresponding to each influencer in real number like 2 = 2%
     function setInfluencerCommission(address[] memory _influencers, uint256[] memory _commissions) external onlyOwner {
         require(_influencers.length == _commissions.length, "Mismatched array lengths");
+        require(_influencers.length <= 100, "Can't allow more than 100 at a time");
         for (uint256 i = 0; i < _influencers.length; i++) {
             address influencer = _influencers[i];
             uint256 newCommission = _commissions[i];
+            require(influencer != address(0), "Invalid influencer address");
+            require(newCommission >= 1 && newCommission <= maxCommissionPercent, "Commission out of bounds");
             // Only count new influencers
             if (!isReferral[influencer]) {
                 influencers.push(influencer);
@@ -604,6 +562,7 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
         uint256 adminAmount = msg.value;
         uint256 tokenAmount = getTokenFromNative(adminAmount);
         require(token.balanceOf(address(this)) >= tokenAmount,"Not enough tokens in contract");
+        _checkSupply(tokenAmount);
         if(isReferral[referrer]) {
             uint256 commissionAmount = (msg.value * commissions[referrer]) / 100;
             adminAmount = msg.value - commissionAmount;
@@ -628,6 +587,7 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
         require(usdt.allowance(msg.sender, address(this)) >= usdtAmount,"Insufficient allowance");
         uint256 tokenAmount =  getTokenFromUsdt(usdtAmount);
         require(token.balanceOf(address(this)) >= tokenAmount,"Not enough tokens in contract");
+        _checkSupply(tokenAmount);
         uint256 adminAmount = usdtAmount;
         if(isReferral[referrer]) {
             uint256 commissionAmount = (usdtAmount * commissions[referrer]) / 100;
@@ -859,6 +819,11 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
        emit StageTimeUpdate(stage, timestamp);
     }
 
+    function setMaxCommissionPercent(uint256 _maxCommissionPercent) external onlyOwner {
+        require(_maxCommissionPercent < 100, "Can't allow 100 percent");
+        maxCommissionPercent = _maxCommissionPercent;
+    }
+
     /**
     * @notice Returns the total amount raised in USDT equivalent (ETH + USDT)
     * @dev ETH is converted to USD using getUSDValue function
@@ -920,6 +885,7 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
         require(whiteList[msg.sender], "only whitelist Address can call");
         require(_tokenAmount > 0, "Amount must be greater than zero");
         require(token.balanceOf(address(this)) >= _tokenAmount,"Not enough tokens in contract");
+        _checkSupply(_tokenAmount);
         totalTokenSoldByCard +=_tokenAmount;
         token.safeTransfer(_user, _tokenAmount);
         emit TokensBoughtWithCard(_user, _tokenAmount);
@@ -941,6 +907,10 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
         require(tokenContract.balanceOf(address(this)) >= amount, "Insufficient token balance");
         tokenContract.safeTransfer(adminWallet, amount);
         emit TokenWithdraw(_token, adminWallet, amount);
+    }
+    
+    function _checkSupply(uint256 _tokenAmount) internal view {
+        require(totalTokenSold + totalTokenSoldByCard + _tokenAmount <= totalTokenCap,"ICO token cap reached");
     }
 
     receive() external payable {}
