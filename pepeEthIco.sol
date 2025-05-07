@@ -423,6 +423,8 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
 
     // Struct to store commission-related data
     struct commissionData {
+        uint256 purchaseCount;    // storing how many times user buy from influencer
+        uint256 totalSellInUSD;   // total usd amount
         uint256 commissionUSD;    // Commission amount in USD
         uint256 totalTokenSale;   // Total tokens sold by the referred user or affiliate
     }
@@ -527,28 +529,34 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
     }
 
     // Returns influencer address and their commission by index
-    function getInfluencerByIndex(uint256 index) external view returns (address influencer, uint256 commissionAmount, uint256 tokenAmount) {
+    function getInfluencerByIndex(uint256 index) external view returns (address influencer, uint256 sellCount, uint256 totalUSDSell, uint256 commissionAmount, uint256 tokenAmount) {
         require(index < influencers.length, "Index out of bounds");
         influencer = influencers[index];
         commissionData memory data = commissionCollect[influencer];
+        sellCount = data.purchaseCount;
+        totalUSDSell = data.totalSellInUSD;
         commissionAmount = data.commissionUSD;
         tokenAmount = data.totalTokenSale;
     }
 
     // All influencer address and their commission by index
-    function getAllInfluencersWithCommission() external view returns (address[] memory influencerList,uint256[] memory commissionList,uint256[] memory tokenAmountList) {
+    function getAllInfluencersWithCommission() external view returns (address[] memory influencerList, uint256[] memory sellCount, uint256[] memory totalUSDSell,uint256[] memory commissionList,uint256[] memory tokenAmountList) {
         uint256 len = influencers.length;
         influencerList = new address[](len);
+        sellCount = new uint256[](len);
+        totalUSDSell = new uint256[](len);
         commissionList = new uint256[](len);
         tokenAmountList = new uint256[](len);
         for (uint256 i = 0; i < len; i++) {
             address influencer = influencers[i];
             commissionData memory data = commissionCollect[influencer];
             influencerList[i] = influencer;
+            sellCount[i]= data.purchaseCount;
+            totalUSDSell[i]= data.totalSellInUSD;
             commissionList[i] = data.commissionUSD;
             tokenAmountList[i] = data.totalTokenSale;
         }
-        return (influencerList, commissionList, tokenAmountList);
+        return (influencerList, sellCount ,totalUSDSell, commissionList, tokenAmountList);
     }
 
     /// @dev Allows users to purchase tokens using ETH. Applies referral bonuses if applicable.
@@ -564,6 +572,9 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
             adminAmount = msg.value - commissionAmount;
             Address.sendValue(payable(referrer), commissionAmount);
             uint256 usdAmount = getUSDValue(commissionAmount);
+            uint256 totalUsdAmount = getUSDValue(msg.value);
+            commissionCollect[referrer].purchaseCount += 1;
+            commissionCollect[referrer].totalSellInUSD += totalUsdAmount;
             commissionCollect[referrer].commissionUSD += usdAmount;
             commissionCollect[referrer].totalTokenSale += tokenAmount;
         }
@@ -588,6 +599,8 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
         if(isReferral[referrer]) {
             uint256 commissionAmount = (usdtAmount * commissions[referrer]) / 100;
             adminAmount = usdtAmount - commissionAmount;
+            commissionCollect[referrer].purchaseCount += 1;
+            commissionCollect[referrer].totalSellInUSD += usdtAmount;
             commissionCollect[referrer].commissionUSD += commissionAmount;
             commissionCollect[referrer].totalTokenSale += tokenAmount;
             usdt.safeTransferFrom(msg.sender, referrer, commissionAmount);
