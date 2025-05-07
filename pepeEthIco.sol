@@ -31,17 +31,11 @@ abstract contract ReentrancyGuard {
     }
 }
 
-// File: ethPepeIco.sol
-
-pragma solidity 0.8.20;
-
 abstract contract Context {
     function _msgSender() internal view virtual returns (address) {
         return msg.sender;
     }
 }
-
-pragma solidity 0.8.20;
 
 abstract contract Ownable is Context {
     address private _owner;
@@ -206,7 +200,6 @@ library Address {
         }
     }
 }
-pragma solidity 0.8.20;
 
 interface IERC20 {
     /**
@@ -324,7 +317,6 @@ library SafeERC20 {
     }
 }
 
-pragma solidity 0.8.20;
 
 interface AggregatorV3Interface {
   function decimals() external view returns (uint8);
@@ -386,8 +378,6 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
 
     // ICO start time
     uint256 public startTime;
-
-    uint256 public constant DURATION = 6 * 30 days; // 6 months
     uint256 public constant INTERVAL = 9 days;
  
     // Bonus percentages for purchases over $50 and $100
@@ -450,6 +440,12 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
     event TokensPurchased(
         address indexed buyer,
         uint256 usdAmount,
+        uint256 tokenAmount
+    );
+
+    event TokensPurchasedWithNative(
+        address indexed buyer,
+        uint256 ethAmount,
         uint256 tokenAmount
     );
 
@@ -571,12 +567,12 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
             commissionCollect[referrer].commissionUSD += usdAmount;
             commissionCollect[referrer].totalTokenSale += tokenAmount;
         }
-        userDeposits[msg.sender].push(Purchase({amount: msg.value,currency: "ETH" ,tokenAmount: tokenAmount,timeStamp: block.timestamp}));
+        userDeposits[msg.sender].push(Purchase({amount: msg.value ,currency: "ETH" ,tokenAmount: tokenAmount,timeStamp: block.timestamp}));
         ethRaised += msg.value;
         totalTokenSold += tokenAmount;
         Address.sendValue(payable(adminWallet), adminAmount);
         token.safeTransfer(msg.sender, tokenAmount);
-        emit TokensPurchased(msg.sender, msg.value, tokenAmount);
+        emit TokensPurchasedWithNative(msg.sender, msg.value, tokenAmount);
     }
 
     /// @dev Allows users to purchase tokens using USDT. Applies referral bonuses if applicable.
@@ -881,7 +877,7 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
     /// @dev Allows the owner to distribute tokens manually (e.g., for card payments).
     /// @param _user The address to receive the tokens.
     /// @param _tokenAmount The amount of tokens to send.
-    function buyWithCard(address _user, uint256 _tokenAmount) external notPaused {
+    function buyWithCard(address _user, uint256 _tokenAmount) external notPaused nonReentrant {
         require(whiteList[msg.sender], "only whitelist Address can call");
         require(_tokenAmount > 0, "Amount must be greater than zero");
         require(token.balanceOf(address(this)) >= _tokenAmount,"Not enough tokens in contract");
@@ -893,7 +889,7 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
 
     /// @dev Owner-only function to withdraw native ETH from the contract.
     /// @param amount The amount of ETH (in wei) to withdraw.
-    function withdrawNative(uint256 amount) external onlyOwner {
+    function withdrawNative(uint256 amount) external nonReentrant onlyOwner {
         require(address(this).balance >= amount, "Insufficient balance");
         Address.sendValue(payable(adminWallet), amount);
         emit NativeWithdraw(adminWallet, amount);
@@ -902,7 +898,7 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
     /// @dev Owner-only function to withdraw any ERC20 token.
     /// @param _token The address of the ERC20 token to withdraw.
     /// @param amount The amount of tokens to withdraw in wei
-    function withdrawToken(address _token, uint256 amount) external onlyOwner {
+    function withdrawToken(address _token, uint256 amount) external nonReentrant onlyOwner {
         IERC20 tokenContract = IERC20(_token);
         require(tokenContract.balanceOf(address(this)) >= amount, "Insufficient token balance");
         tokenContract.safeTransfer(adminWallet, amount);
