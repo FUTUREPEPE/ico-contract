@@ -570,13 +570,13 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
         if(isReferral[referrer]) {
             uint256 commissionAmount = (msg.value * commissions[referrer]) / 100;
             adminAmount = msg.value - commissionAmount;
-            Address.sendValue(payable(referrer), commissionAmount);
             uint256 usdAmount = getUSDValue(commissionAmount);
             uint256 totalUsdAmount = getUSDValue(msg.value);
             commissionCollect[referrer].purchaseCount += 1;
             commissionCollect[referrer].totalSellInUSD += totalUsdAmount;
             commissionCollect[referrer].commissionUSD += usdAmount;
             commissionCollect[referrer].totalTokenSale += tokenAmount;
+            Address.sendValue(payable(referrer), commissionAmount);
         }
         userDeposits[msg.sender].push(Purchase({amount: msg.value ,currency: "ETH" ,tokenAmount: tokenAmount,timeStamp: block.timestamp}));
         ethRaised += msg.value;
