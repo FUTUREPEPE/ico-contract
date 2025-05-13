@@ -500,6 +500,10 @@ contract PepeETHIco is Ownable, ReentrancyGuard {
         maxCommissionPercent = 50; // only real number we gonna support.
     }
 
+    function updateTotalTokenCap(uint256 _newTotalTokenCap) external onlyOwner {
+        totalTokenCap = _newTotalTokenCap;
+    }
+
     /// @dev Sets commission percentages for a list of influencer addresses.
     /// @param _influencers Array of influencer addresses to register as referrers.
     /// @param _commissions Array of commission percentages corresponding to each influencer in real number like 2 = 2%
