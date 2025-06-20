@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity ^0.8.20;
 
 abstract contract ReentrancyGuard {
+
     uint256 private constant _NOT_ENTERED = 1;
     uint256 private constant _ENTERED = 2;
 
@@ -10,6 +11,7 @@ abstract contract ReentrancyGuard {
     constructor() {
         _status = _NOT_ENTERED;
     }
+
     modifier nonReentrant() {
         _nonReentrantBefore();
         _;
@@ -31,92 +33,68 @@ abstract contract ReentrancyGuard {
     }
 }
 
+// File: bnbPepeIco.sol
+
+
+
+
 abstract contract Context {
     function _msgSender() internal view virtual returns (address) {
         return msg.sender;
     }
 }
 
+
+
 abstract contract Ownable is Context {
     address private _owner;
-
-    /**
-     * @dev The caller account is not authorized to perform an operation.
-     */
     error OwnableUnauthorizedAccount(address account);
-
-    /**
-     * @dev The owner is not a valid owner account. (eg. `address(0)`)
-     */
     error OwnableInvalidOwner(address owner);
-
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    /**
-     * @dev Initializes the contract setting the address provided by the deployer as the initial owner.
-     */
     constructor(address initialOwner) {
         if (initialOwner == address(0)) {
             revert OwnableInvalidOwner(address(0));
         }
         _transferOwnership(initialOwner);
     }
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
     modifier onlyOwner() {
         _checkOwner();
         _;
     }
-
-    /**
-     * @dev Returns the address of the current owner.
-     */
     function owner() public view virtual returns (address) {
         return _owner;
     }
-
-    /**
-     * @dev Throws if the sender is not the owner.
-     */
     function _checkOwner() internal view virtual {
         if (owner() != _msgSender()) {
             revert OwnableUnauthorizedAccount(_msgSender());
         }
     }
-
-    /**
-     * @dev Leaves the contract without owner. It will not be possible to call
-     * `onlyOwner` functions. Can only be called by the current owner.
-     *
-     * NOTE: Renouncing ownership will leave the contract without an owner,
-     * thereby disabling any functionality that is only available to the owner.
-     */
     function renounceOwnership() public virtual onlyOwner {
         _transferOwnership(address(0));
     }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current owner.
-     */
     function transferOwnership(address newOwner) public virtual onlyOwner {
         if (newOwner == address(0)) {
             revert OwnableInvalidOwner(address(0));
         }
         _transferOwnership(newOwner);
     }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Internal function without access restriction.
-     */
     function _transferOwnership(address newOwner) internal virtual {
         address oldOwner = _owner;
         _owner = newOwner;
         emit OwnershipTransferred(oldOwner, newOwner);
     }
+}
+
+interface IERC20 {
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+    function totalSupply() external view returns (uint256);
+    function balanceOf(address account) external view returns (uint256);
+    function decimals() external view returns (uint8);
+    function transfer(address to, uint256 value) external returns (bool);
+    function allowance(address owner, address spender) external view returns (uint256);
+    function approve(address spender, uint256 value) external returns (bool);
+    function transferFrom(address from, address to, uint256 value) external returns (bool);
 }
 
 library Address {
@@ -201,83 +179,6 @@ library Address {
     }
 }
 
-interface IERC20 {
-    /**
-     * @dev Emitted when `value` tokens are moved from one account (`from`) to
-     * another (`to`).
-     *
-     * Note that `value` may be zero.
-     */
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    /**
-     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
-     * a call to {approve}. `value` is the new allowance.
-     */
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-
-    /**
-     * @dev Returns the value of tokens in existence.
-     */
-    function totalSupply() external view returns (uint256);
-
-    /**
-     * @dev Returns the value of tokens owned by `account`.
-     */
-    function balanceOf(address account) external view returns (uint256);
-
-    /**
-     * @dev Returns the number of decimals the token uses.
-     */
-    function decimals() external view returns (uint8);
-
-    /**
-     * @dev Moves a `value` amount of tokens from the caller's account to `to`.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * Emits a {Transfer} event.
-     */
-    function transfer(address to, uint256 value) external returns (bool);
-
-    /**
-     * @dev Returns the remaining number of tokens that `spender` will be
-     * allowed to spend on behalf of `owner` through {transferFrom}. This is
-     * zero by default.
-     *
-     * This value changes when {approve} or {transferFrom} are called.
-     */
-    function allowance(address owner, address spender) external view returns (uint256);
-
-    /**
-     * @dev Sets a `value` amount of tokens as the allowance of `spender` over the
-     * caller's tokens.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * IMPORTANT: Beware that changing an allowance with this method brings the risk
-     * that someone may use both the old and the new allowance by unfortunate
-     * transaction ordering. One possible solution to mitigate this race
-     * condition is to first reduce the spender's allowance to 0 and set the
-     * desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     *
-     * Emits an {Approval} event.
-     */
-    function approve(address spender, uint256 value) external returns (bool);
-
-    /**
-     * @dev Moves a `value` amount of tokens from `from` to `to` using the
-     * allowance mechanism. `value` is then deducted from the caller's
-     * allowance.
-     *
-     * Returns a boolean value indicating whether the operation succeeded.
-     *
-     * Emits a {Transfer} event.
-     */
-    function transferFrom(address from, address to, uint256 value) external returns (bool);
-}
-
 library SafeERC20 {
     using Address for address;
 
@@ -289,7 +190,6 @@ library SafeERC20 {
     function safeTransfer(IERC20 token, address to, uint256 value) internal {
         _callOptionalReturn(token, abi.encodeCall(token.transfer, (to, value)));
     }
-
 
     function safeTransferFrom(IERC20 token, address from, address to, uint256 value) internal {
         _callOptionalReturn(token, abi.encodeCall(token.transferFrom, (from, to, value)));
@@ -316,7 +216,7 @@ library SafeERC20 {
         return success && (returndata.length == 0 || abi.decode(returndata, (bool))) && address(token).code.length > 0;
     }
 }
-
+pragma solidity ^0.8.0;
 
 interface AggregatorV3Interface {
   function decimals() external view returns (uint8);
@@ -342,16 +242,15 @@ contract FuturePepeICO is Ownable, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
     using Address for address;
-    
+
     // USDT stablecoin for purchasing tokens
     IERC20 public usdt;
 
-    // Chainlink price feed for ETH/USD
+    // Chainlink price feed for BNB/USD
     AggregatorV3Interface internal priceFeed;
 
     // Admin wallet to collect funds
     address public adminWallet;
-    // fundwallet to send tokens
 
     // List of registered influencer addresses
     address[] public influencers;
@@ -360,35 +259,37 @@ contract FuturePepeICO is Ownable, ReentrancyGuard {
     // Determines if fixed pricing is used instead of dynamic stage pricing
     bool public useFixedPrice;
 
-    // Fixed price in USD with 6 decimals (e.g., 3000 = $0.003)
+    // Fixed price in USD with 18 decimals (e.g., 3000 = $0.003)
     uint256 public fixedPriceUSD;
 
     // Sum of all influencer commissions
     uint256 public totalInfluence;
 
-    // Initial and final token prices in USD (6 decimals)
-    uint256 public constant INITIAL_PRICE_USD = 6000; // $0.006
-    uint256 public constant FINAL_PRICE_USD = 16730;  // $0.01673
+    // Initial and final token prices in USD (18 decimals)
+    uint256 public constant INITIAL_PRICE_USD = 3_000_000_000_000_000; // $0.003
+    uint256 public constant FINAL_PRICE_USD = 16_730_000_000_000_000;  // $0.01673
+    uint256 constant MULTIPLIER = 1e8;
 
     // Total number of pricing stages
     uint256 public constant TOTAL_STAGES = 20;
 
     // ICO start time
     uint256 public startTime;
+
+    // Duration and interval constants (set as placeholder for demo/testing)
     uint256 public constant INTERVAL = 9 days;
  
     // Bonus percentages for purchases over $50 and $100
     uint256 private constant BONUS_5000 = 2;      // 2% bonus for $5000+
     uint256 private constant BONUS_10000 = 4;     // 4% bonus for $10000+
-
-    // These constants represent the bonus thresholds in USDT smallest units (6 decimals)
-    uint256 private constant USD_5000 = 5000 * 10 ** 6;
-    uint256 private constant USD_10000 = 10000 * 10 **6;
-    uint256 constant MULTIPLIER = 1e20;
+    
+    // These constants represent the bonus thresholds in USDT smallest units (18 decimals)
+    uint256 private USD_5000 = 5000 * 10 ** 18;
+    uint256 private USD_10000 = 10000 * 10 **18;
     uint256 public maxCommissionPercent;
 
-    // Total amount of ETH raised from all purchases (denominated in wei)
-    uint256 public ethRaised;
+    // Total amount of BNB raised from all purchases (denominated in wei)
+    uint256 public bnbRaised;
 
     // Total amount of USDT raised from all purchases (based on USDT decimals)
     uint256 public usdtRaised;
@@ -408,9 +309,6 @@ contract FuturePepeICO is Ownable, ReentrancyGuard {
         uint256 totalTokenSale;   // Total tokens sold by the referred user or affiliate
     }
 
-    mapping(address => bool) public whiteList;
-
-    // Mapping to track all deposits made by each user address
     mapping(address => uint256) public userDeposits;
 
     // Mapping to define custom start times for different sale stages
@@ -449,17 +347,12 @@ contract FuturePepeICO is Ownable, ReentrancyGuard {
     ///  Emitted when the fixed price settings are updated.
     event FixedPriceUpdated(bool useFixedPrice, uint256 priceUSD);
 
-    ///  Emitted when tokens are manually distributed via card payment.
-    event TokensBoughtWithCard(address indexed user, uint256 tokenAmount);
-
     ///  Emitted when native ETH is withdrawn from the contract.
     event NativeWithdraw(address indexed to, uint256 amount);
 
     ///  Emitted when an ERC20 token is withdrawn from the contract.
     event TokenWithdraw(address indexed token, address indexed to, uint256 amount);
 
-    // Event declaration for whitelist address update (optional, can help with logging the change)
-    event WhiteListUpdated(address indexed newWhiteList);
     event ToggleSale();
 
     modifier notPaused() {
@@ -467,6 +360,11 @@ contract FuturePepeICO is Ownable, ReentrancyGuard {
         _;
     }
 
+    /// @dev Constructor to initialize ICO parameters.
+    /// @param _usdt Address of the USDT token used for stable payments.
+    /// @param _priceFeed Chainlink price feed address for BNB/USD.
+    /// @param _adminWallet Address where collected funds are sent.
+    /// @param _startTime Timestamp when the ICO should start.
     constructor(
         address _usdt,
         address _priceFeed,
@@ -477,12 +375,14 @@ contract FuturePepeICO is Ownable, ReentrancyGuard {
         priceFeed = AggregatorV3Interface(_priceFeed);
         adminWallet = _adminWallet;
         startTime = _startTime;
-        totalTokenCap = 175_000_000 * 10**18;   // 70% of 250M for ETH-ICO
+        totalTokenCap = 75_000_000 *10**18;
         maxCommissionPercent = 50; // only real number we gonna support.
     }
 
-    function updateTotalTokenCap(uint256 _newTotalTokenCap) external onlyOwner {
-        totalTokenCap = _newTotalTokenCap;
+    // @notice Function to toggle sale if needed only by owner
+    function toggleSale() external onlyOwner{
+        isActive = !isActive;
+        emit ToggleSale();
     }
 
     /// @dev Sets commission percentages for a list of influencer addresses.
@@ -505,12 +405,6 @@ contract FuturePepeICO is Ownable, ReentrancyGuard {
             isReferral[influencer] = true;
             emit CommissionSet(influencer, newCommission);
         }
-    }
-
-    // @notice Function to toggle sale if needed only by owner
-    function toggleSale() external onlyOwner{
-        isActive = !isActive;
-        emit ToggleSale();
     }
 
     // Returns influencer address and their commission by index
@@ -543,28 +437,28 @@ contract FuturePepeICO is Ownable, ReentrancyGuard {
         }
         return (influencerList, sellCount ,totalUSDSell, commissionList, tokenAmountList);
     }
-
-    /// @dev Allows users to purchase tokens using ETH. Applies referral bonuses if applicable.
+        
+    /// @dev Allows users to purchase tokens using BNB. Applies referral bonuses if applicable.
     /// @param referrer The address of the referrer (if any).
     function buyWithNative(address referrer) external payable notPaused nonReentrant {
-        require(msg.value > 0, "Must send ETH to buy tokens");
+        require(msg.value > 0, "Must send BNB to buy tokens");
         uint256 adminAmount = msg.value;
         uint256 tokenAmount = getTokenFromNative(adminAmount);
         _checkSupply(tokenAmount);
-        if(isReferral[referrer]) {
+        if (isReferral[referrer]) {
             uint256 commissionAmount = (msg.value * commissions[referrer]) / 100;
             adminAmount = msg.value - commissionAmount;
+            Address.sendValue(payable(referrer), commissionAmount);
             uint256 usdAmount = getUSDValue(commissionAmount);
             uint256 totalUsdAmount = getUSDValue(msg.value);
             commissionCollect[referrer].purchaseCount += 1;
             commissionCollect[referrer].totalSellInUSD += totalUsdAmount;
             commissionCollect[referrer].commissionUSD += usdAmount;
             commissionCollect[referrer].totalTokenSale += tokenAmount;
-            Address.sendValue(payable(referrer), commissionAmount);
         }
         _storeUniqueUser(msg.sender);
         userDeposits[msg.sender] += tokenAmount;
-        ethRaised += msg.value;
+        bnbRaised += msg.value ;
         totalTokenSold += tokenAmount;
         Address.sendValue(payable(adminWallet), adminAmount);
         emit TokensPurchasedWithNative(msg.sender, msg.value, tokenAmount);
@@ -579,7 +473,7 @@ contract FuturePepeICO is Ownable, ReentrancyGuard {
         uint256 tokenAmount =  getTokenFromUsdt(usdtAmount);
         _checkSupply(tokenAmount);
         uint256 adminAmount = usdtAmount;
-        if(isReferral[referrer]) {
+        if (isReferral[referrer]){
             uint256 commissionAmount = (usdtAmount * commissions[referrer]) / 100;
             adminAmount = usdtAmount - commissionAmount;
             commissionCollect[referrer].purchaseCount += 1;
@@ -590,135 +484,108 @@ contract FuturePepeICO is Ownable, ReentrancyGuard {
         }
         _storeUniqueUser(msg.sender);
         userDeposits[msg.sender] += tokenAmount;
-        usdtRaised += usdtAmount ;
+        usdtRaised+= usdtAmount;
         totalTokenSold += tokenAmount;
         usdt.safeTransferFrom(msg.sender, adminWallet, adminAmount);
         emit TokensPurchased(msg.sender, usdtAmount, tokenAmount);
     }
 
     // Function to calculate the token amount based on ETH amount
-    function getTokenFromNative(uint256 _ethAmount) public view returns(uint256 ){
-        (, uint256 priceETH, , ) = getCurrentStageAndPrice();
-        uint256 tokenAmount = (_ethAmount * 1e18) / priceETH;
-        uint256 usdtAmount = getUSDValue(_ethAmount);
+    function getTokenFromNative(uint256 _bnbAmount) public view returns(uint256 ){
+        (, uint256 priceBNB, , ) = getCurrentStageAndPrice();
+        uint256 tokenAmount = (_bnbAmount * 1e18) / priceBNB;
+        uint256 usdtAmount = getUSDValue(_bnbAmount);
         if (usdtAmount >= USD_5000) {
-            tokenAmount += applyBonuses(tokenAmount, usdtAmount);
+            tokenAmount += applyBonuses(tokenAmount, getUSDValue(_bnbAmount));
         }
-        return tokenAmount ;
+      return tokenAmount;
     }
 
     // Function to calculate the token amount based on USDT amount
     function getTokenFromUsdt(uint256 _usdtAmount) public view returns(uint256 ){
         (, , uint256 priceUSD, ) = getCurrentStageAndPrice();
-        uint256 tokenAmount = (_usdtAmount * 1e18) / priceUSD;
+        uint256 tokenPriceUSD = priceUSD;
+        uint256 tokenAmount = (_usdtAmount * 1e18) / tokenPriceUSD;
         if (_usdtAmount >= USD_5000) {
             tokenAmount += applyBonuses(tokenAmount, _usdtAmount);
         }
-      return tokenAmount;
-    }
-
-    /// @dev Applies bonus tokens based on the USD value of the purchase.
-    /// @param baseAmount The initial amount of tokens before bonus.
-    /// @param usdAmount The equivalent USD amount of the purchase.
-    /// @return The total bonus amount to be added.
-    function applyBonuses(uint256 baseAmount, uint256 usdAmount)
-        public 
-        pure
-        returns (uint256)
-    {
-        uint256 bonus = 0;
-        if (usdAmount >= USD_10000) {
-            bonus = (baseAmount * BONUS_10000) / 100;
-        } else if (usdAmount >= USD_5000) {
-            bonus = (baseAmount * BONUS_5000) / 100;
-        }
-        return bonus;
+      return tokenAmount ;
     }
 
     /// @dev Calculates and returns the current stage, token price in ETH and USD, and the stage start time.
     /// @return stage The current ICO stage number (1-based index).
-    /// @return priceETH The token price in ETH (wei).
+    /// @return priceBNB The token price in ETH (wei).
     /// @return priceUSD The token price in USD (with 8 decimals).
     /// @return stageStartTime The timestamp when the current stage started.
-    function getCurrentStageAndPrice()
-        public
-        view
-        returns (
-            uint8 stage,
-            uint256 priceETH,
-            uint256 priceUSD,
-            uint256 stageStartTime
-        )
-    {
-    uint256 ethPrice = getLatestPrice();
-    require(ethPrice > 0, "ETH price is zero");
-
-    if (useFixedPrice) {
-        uint256 fixedStagePriceInETH = (fixedPriceUSD * MULTIPLIER) / ethPrice;
-        return (0, fixedStagePriceInETH, fixedPriceUSD, startTime);
-    }
-    // Step 1: Build an array of actual start times (with cascading logic)
-    uint256[] memory actualStartTimes = new uint256[](TOTAL_STAGES);
-    for (uint8 i = 0; i < TOTAL_STAGES; i++) {
-        if (i == 0) {
-            actualStartTimes[i] = customStageStartTimes[1] != 0
-                ? customStageStartTimes[1]
-                : startTime;
-        } else {
-            uint8 stageNum = i + 1;
-            if (customStageStartTimes[stageNum] != 0) {
-                actualStartTimes[i] = customStageStartTimes[stageNum];
+    function getCurrentStageAndPrice() public view returns (uint8 stage,uint256 priceBNB,uint256 priceUSD,uint256 stageStartTime){
+        uint256 bnbPrice = getLatestPrice();
+        require(bnbPrice > 0, "BNB price is zero");
+        if (useFixedPrice) {
+            uint256 fixedStagePriceInBNB = (fixedPriceUSD * MULTIPLIER) / bnbPrice;
+            return (0, fixedStagePriceInBNB, fixedPriceUSD, startTime);
+        }
+        // Step 1: Build an array of actual start times (with cascading logic)
+        uint256[] memory actualStartTimes = new uint256[](TOTAL_STAGES);
+        for (uint8 i = 0; i < TOTAL_STAGES; i++) {
+            if (i == 0) {
+                actualStartTimes[i] = customStageStartTimes[1] != 0
+                    ? customStageStartTimes[1]
+                    : startTime;
             } else {
-                actualStartTimes[i] = actualStartTimes[i - 1] + INTERVAL;
+                uint8 stageNum = i + 1;
+                if (customStageStartTimes[stageNum] != 0) {
+                    actualStartTimes[i] = customStageStartTimes[stageNum];
+                } else {
+                    actualStartTimes[i] = actualStartTimes[i - 1] + INTERVAL;
+                }
             }
         }
-    }
-    
-    // Step 2: Determine current stage based on timestamps
-    uint8 currentStage = 0;
-    for (uint8 i = 0; i < TOTAL_STAGES; i++) {
-        if (block.timestamp < actualStartTimes[i]) {
-            break;
+        // Step 2: Determine current stage based on timestamps
+        uint8 currentStage = 0;
+        for (uint8 i = 0; i < TOTAL_STAGES; i++) {
+            if (block.timestamp < actualStartTimes[i]) {
+                break;
+            }
+            currentStage = i + 1;
         }
-        currentStage = i + 1;
-    }
-    // Handle case where current time is before startTime
-    if (currentStage == 0) {
-        uint256 initialPrice = (INITIAL_PRICE_USD * MULTIPLIER) / ethPrice;
-        return (0, initialPrice, INITIAL_PRICE_USD, actualStartTimes[0]);
-    }
-    // Step 3: Cap to final stage
-    if (currentStage >= TOTAL_STAGES) {
-        uint256 finalStagePriceInETH = (FINAL_PRICE_USD * MULTIPLIER) / ethPrice;
-        return (
-            uint8(TOTAL_STAGES),
-            finalStagePriceInETH,
-            FINAL_PRICE_USD,
-            actualStartTimes[TOTAL_STAGES - 1]
-        );
-    }
+        
+        // Handle case where current time is before startTime
+        if (currentStage == 0) {
+            uint256 initialPriceInBNB = (INITIAL_PRICE_USD * MULTIPLIER) / bnbPrice;
+            return (0, initialPriceInBNB, INITIAL_PRICE_USD, actualStartTimes[0]);
+        }
+        // Step 3: Cap to final stage
+        if (currentStage >= TOTAL_STAGES) {
+            uint256 finalStagePriceInBNB = (FINAL_PRICE_USD * MULTIPLIER) / bnbPrice;
+            return (
+                uint8(TOTAL_STAGES),
+                finalStagePriceInBNB,
+                FINAL_PRICE_USD,
+                actualStartTimes[TOTAL_STAGES - 1]
+            );
+        }
 
-    // Step 4: Calculate USD price for current stage
-    uint256 priceUSDT = INITIAL_PRICE_USD;
-    for (uint8 i = 0; i < currentStage - 1; i++) {
-        if (i + 1 >= 1 && i + 1 <= 4) {
-            priceUSDT += (priceUSDT * 10) / 100;
-        } else if (i + 1 >= 5 && i + 1 <= 10) {
-            priceUSDT += (priceUSDT * 9) / 100;
-        } else if (i + 1 >= 11 && i + 1 <= 17) {
-            priceUSDT += (priceUSDT * 85) / 1000;
-        } else if (i + 1 == 18) {
-            priceUSDT += (priceUSDT * 8) / 100;
-        } else {
-            priceUSDT = FINAL_PRICE_USD;
+        // Step 4: Calculate USD price for current stage
+        uint256 priceUSDT = INITIAL_PRICE_USD;
+        for (uint8 i = 0; i < currentStage - 1; i++) {
+            if (i + 1 >= 1 && i + 1 <= 4) {
+                priceUSDT += (priceUSDT * 10) / 100;
+            } else if (i + 1 >= 5 && i + 1 <= 10) {
+                priceUSDT += (priceUSDT * 9) / 100;
+            } else if (i + 1 >= 11 && i + 1 <= 17) {
+                priceUSDT += (priceUSDT * 85) / 1000;
+            } else if (i + 1 == 18) {
+                priceUSDT += (priceUSDT * 8) / 100;
+            } else {
+                priceUSDT = FINAL_PRICE_USD;
+            }
         }
-    }
-    uint256 stagePriceInETH = (priceUSDT * MULTIPLIER) / ethPrice;
-    return (
-        currentStage,
-        stagePriceInETH,
-        priceUSDT,
-        actualStartTimes[currentStage - 1]
+        uint256 stagePriceInBNB = (priceUSDT * MULTIPLIER) / bnbPrice;
+        return (
+            currentStage,
+            stagePriceInBNB,
+            priceUSDT,
+            actualStartTimes[currentStage - 1]
         );
     }
 
@@ -726,7 +593,7 @@ contract FuturePepeICO is Ownable, ReentrancyGuard {
     * @notice Sets whether to use a fixed price in USD and defines the fixed price value.
     * @dev Can only be called by the contract owner.
     * @param _useFixedPrice Boolean flag to enable or disable the use of a fixed USD price.
-    * @param _priceUSD The fixed price value in USD to be used if _useFixedPrice is true.
+    * @param _priceUSD The fixed price value in USD(in wei) to be used if _useFixedPrice is true.
     */
     function setUseFixedPrice(bool _useFixedPrice, uint256 _priceUSD)
         external
@@ -739,65 +606,64 @@ contract FuturePepeICO is Ownable, ReentrancyGuard {
 
     /// @dev Returns a list of all ICO stages along with their ETH and USD prices, and start times.
     /// @return stagesList An array of stage numbers (1-based index).
-    /// @return pricesETH An array of token prices in ETH (in wei) for each stage.
+    /// @return pricesBNB An array of token prices in ETH (in wei) for each stage.
     /// @return pricesUSD An array of token prices in USD (with 8 decimals) for each stage.
     /// @return startTimes An array of start timestamps for each stage.
+
     function getAllStagesAndPrices()
         external
         view
         returns (
             uint8[] memory stagesList,
-            uint256[] memory pricesETH,
+            uint256[] memory pricesBNB,
             uint256[] memory pricesUSD,
             uint256[] memory startTimes
         )
-    {
-        uint8[] memory _stagesList = new uint8[](TOTAL_STAGES);
-        uint256[] memory _pricesETH = new uint256[](TOTAL_STAGES);
-        uint256[] memory _pricesUSD = new uint256[](TOTAL_STAGES);
-        uint256[] memory _startTimes = new uint256[](TOTAL_STAGES);
+        {
+            uint8[] memory _stagesList = new uint8[](TOTAL_STAGES);
+            uint256[] memory _pricesBNB = new uint256[](TOTAL_STAGES);
+            uint256[] memory _pricesUSD = new uint256[](TOTAL_STAGES);
+            uint256[] memory _startTimes = new uint256[](TOTAL_STAGES);
 
-        uint256 ethPrice = getLatestPrice();
-        require(ethPrice > 0, "ETH price is zero");
+            uint256 bnbPrice = getLatestPrice();
+            require(bnbPrice > 0, "BNB price is zero");
 
-        uint256 priceUSD = INITIAL_PRICE_USD;
+            uint256 priceUSD = INITIAL_PRICE_USD;
 
-    for (uint8 i = 0; i < TOTAL_STAGES; i++) {
-        _stagesList[i] = i + 1;
-
-        if (i == 0) {
-            // First stage: use custom or default
-            _startTimes[i] = customStageStartTimes[1] != 0
-                ? customStageStartTimes[1]
-                : startTime;
-        } else {
-            uint8 stageNum = i + 1;
-            if (customStageStartTimes[stageNum] != 0) {
-                _startTimes[i] = customStageStartTimes[stageNum];
+        for (uint8 i = 0; i < TOTAL_STAGES; i++) {
+            _stagesList[i] = i + 1;
+            if (i == 0) {
+                // First stage: use custom or default
+                _startTimes[i] = customStageStartTimes[1] != 0
+                    ? customStageStartTimes[1]
+                    : startTime;
             } else {
-                _startTimes[i] = _startTimes[i - 1] + INTERVAL;
+                uint8 stageNum = i + 1;
+                if (customStageStartTimes[stageNum] != 0) {
+                    _startTimes[i] = customStageStartTimes[stageNum];
+                } else {
+                    _startTimes[i] = _startTimes[i - 1] + INTERVAL;
+                }
+            }
+            _pricesUSD[i] = priceUSD;
+            _pricesBNB[i] = (priceUSD * MULTIPLIER) / bnbPrice;
+
+            // Calculate next price (for i + 1 stage)
+            if (i + 1 < TOTAL_STAGES) {
+                if (i + 1 >= 1 && i + 1 <= 4) {
+                    priceUSD += (priceUSD * 10) / 100;
+                } else if (i + 1 >= 5 && i + 1 <= 10) {
+                    priceUSD += (priceUSD * 9) / 100;
+                } else if (i + 1 >= 11 && i + 1 <= 17) {
+                    priceUSD += (priceUSD * 85) / 1000;
+                } else if (i + 1 == 18) {
+                    priceUSD += (priceUSD * 8) / 100;
+                } else {
+                    priceUSD = FINAL_PRICE_USD;
+                }
             }
         }
-
-        _pricesUSD[i] = priceUSD;
-        _pricesETH[i] = (priceUSD * MULTIPLIER) / ethPrice;
-
-        // Calculate next price (for i + 1 stage)
-        if (i + 1 < TOTAL_STAGES) {
-            if (i + 1 >= 1 && i + 1 <= 4) {
-                priceUSD += (priceUSD * 10) / 100;
-            } else if (i + 1 >= 5 && i + 1 <= 10) {
-                priceUSD += (priceUSD * 9) / 100;
-            } else if (i + 1 >= 11 && i + 1 <= 17) {
-                priceUSD += (priceUSD * 85) / 1000;
-            } else if (i + 1 == 18) {
-                priceUSD += (priceUSD * 8) / 100;
-            } else {
-                priceUSD = FINAL_PRICE_USD;
-            }
-        }
-    }
-        return (_stagesList, _pricesETH, _pricesUSD, _startTimes);
+        return (_stagesList, _pricesBNB, _pricesUSD, _startTimes);
     }
 
     /**
@@ -809,7 +675,7 @@ contract FuturePepeICO is Ownable, ReentrancyGuard {
     function setCustomStageStartTime(uint8 stage, uint256 timestamp) external onlyOwner {
         require(stage >= 1 && stage <= TOTAL_STAGES, "Invalid stage");
         customStageStartTimes[stage] = timestamp;
-       emit StageTimeUpdate(stage, timestamp);
+        emit StageTimeUpdate(stage, timestamp);
     }
 
     function setMaxCommissionPercent(uint256 _maxCommissionPercent) external onlyOwner {
@@ -823,42 +689,50 @@ contract FuturePepeICO is Ownable, ReentrancyGuard {
     * @return Total amount raised in USD across both currencies
     */
     function totalUsdtRaised() external view returns (uint256) {
-        return (getUSDValue(ethRaised) + usdtRaised);
+        return (getUSDValue(bnbRaised) + usdtRaised);
     }
 
     /// @dev Converts an ETH amount to its equivalent USD value using the current price feed.
-    /// @param ethAmount The amount of ETH (in wei) to convert.
+    /// @param bnbAmount The amount of ETH (in wei) to convert.
     /// @return The equivalent USD value (with 8 decimals).
-    function getUSDValue(uint256 ethAmount) public view returns (uint256) {
-        uint256 ethPrice = getLatestPrice(); // Assumes price is in USD with 8 decimals
-        return (ethAmount * ethPrice) / MULTIPLIER;
+    function getUSDValue(uint256 bnbAmount) public view returns (uint256) {
+        uint256 bnbPrice = getLatestPrice(); // Assumes price is in USD with 8 decimals
+        return (bnbAmount * bnbPrice) / MULTIPLIER;
     }
 
     /// @dev Converts a USD amount to its equivalent ETH value using the current price feed.
     /// @param usdAmount The amount of USD (with 8 decimals) to convert.
-    /// @return The equivalent ETH amount (in wei).
-    function getEthValue(uint256 usdAmount) external view returns (uint256) {
-        uint256 ethPrice = getLatestPrice(); // ETH price in USD with 8 decimals
-        return (usdAmount * MULTIPLIER) / ethPrice; // Convert to wei (1 ETH = 1e18 wei)
+    /// @return The equivalent BNB amount (in wei).
+    function getBNBValue(uint256 usdAmount) public view returns (uint256) {
+        uint256 bnbPrice = getLatestPrice(); // ETH price in USD with 8 decimals
+        return (usdAmount * MULTIPLIER) / bnbPrice; // Convert to wei (1 ETH = 1e18 wei)
     }
 
     /// @dev Retrieves the latest ETH/USD price from the Chainlink price feed.
     /// @return The ETH price in USD (with 8 decimals).
+
     function getLatestPrice() public view returns (uint256) {
         (, int256 price, , , ) = priceFeed.latestRoundData();
         require(price > 0, "Invalid price");
         return uint256(price); // Price returned with 8 decimals
     }
 
-    /**
-     * @dev Allows the owner to whitelist a specific address.
-     * @param _whiteList The address to be added to the whitelist.
-     * Only the owner can call this function.
-     * Emits a WhiteListUpdated event when the whitelist address is changed.
-     */
-    function whitelistAddress(address _whiteList) external onlyOwner {
-        whiteList[_whiteList] = true;
-        emit WhiteListUpdated(_whiteList);
+    /// @dev Applies bonus tokens based on the USD value of the purchase.
+    /// @param baseAmount The initial amount of tokens before bonus.
+    /// @param usdAmount The equivalent USD amount of the purchase.
+    /// @return The total bonus amount to be added.
+    function applyBonuses(uint256 baseAmount, uint256 usdAmount)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 bonus = 0;
+        if (usdAmount >= USD_10000) {
+            bonus = (baseAmount * BONUS_10000) / 100;
+        } else if (usdAmount >= USD_5000) {
+            bonus = (baseAmount * BONUS_5000) / 100;
+        }
+        return bonus;
     }
 
     /**
@@ -869,21 +743,6 @@ contract FuturePepeICO is Ownable, ReentrancyGuard {
      */
     function getUserTxData(address user) external view returns (uint256) {
         return userDeposits[user];
-    }
-
-    function buyWithCardWithUSDT(address _user, uint256 _usdtAmount, uint256 _tokenAmount) external notPaused nonReentrant {
-        require(whiteList[msg.sender], "Only whitelisted address can call");
-        require(_usdtAmount > 0, "USDT amount must be greater than zero");
-        require(_tokenAmount > 0, "Token amount must be greater than zero");
-        require(usdt.allowance(msg.sender, address(this)) >= _usdtAmount, "Insufficient USDT allowance from msg.sender");
-        _checkSupply(_tokenAmount);   // Check and update token supply
-        _storeUniqueUser(_user);
-        userDeposits[_user] += _tokenAmount;
-        totalTokenSold += _tokenAmount;
-        usdtRaised += _usdtAmount ;
-        // Transfer USDT from Wert (msg.sender) to the admin wallet
-        usdt.safeTransferFrom(msg.sender, adminWallet, _usdtAmount);
-        emit TokensBoughtWithCard(_user, _tokenAmount);
     }
 
     /// @dev Owner-only function to withdraw native ETH from the contract.
@@ -897,15 +756,15 @@ contract FuturePepeICO is Ownable, ReentrancyGuard {
     /// @dev Owner-only function to withdraw any ERC20 token.
     /// @param _token The address of the ERC20 token to withdraw.
     /// @param amount The amount of tokens to withdraw in wei
-    function withdrawToken(address _token, uint256 amount) external nonReentrant onlyOwner {
+    function withdrawToken(address _token, uint256 amount) external nonReentrant onlyOwner  {
         IERC20 tokenContract = IERC20(_token);
         require(tokenContract.balanceOf(address(this)) >= amount, "Insufficient token balance");
         tokenContract.safeTransfer(adminWallet, amount);
         emit TokenWithdraw(_token, adminWallet, amount);
     }
-    
-    function _checkSupply(uint256 _tokenAmount) internal view {
-        require(totalTokenSold + _tokenAmount <= totalTokenCap,"ICO token cap reached");
+
+    function updateTotalTokenCap(uint256 _newTotalTokenCap) external onlyOwner {
+        totalTokenCap = _newTotalTokenCap;
     }
 
     function _storeUniqueUser(address uniqueUserWallet) internal {
@@ -913,6 +772,10 @@ contract FuturePepeICO is Ownable, ReentrancyGuard {
             allUniqueUsers.push(uniqueUserWallet);
         }  
     }
-    
+
+    function _checkSupply(uint256 _tokenAmount) internal view {
+        require(totalTokenSold + _tokenAmount <= totalTokenCap,"Token cap reached");
+    }
+
     receive() external payable {}
 }
